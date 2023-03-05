@@ -1,7 +1,6 @@
 import io
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import make_password
 from django.db.models.aggregates import Count, Sum
 from django.db.models.expressions import Exists, OuterRef, Value
 from django.http import FileResponse
@@ -11,8 +10,6 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from rest_framework import generics, status, viewsets
-from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action, api_view
 from rest_framework.permissions import (SAFE_METHODS, AllowAny,
                                         IsAuthenticated,
@@ -25,9 +22,10 @@ from recipes.models import (FavoriteRecipe, Ingredient, Recipe, ShoppingCart,
                             Subscribe, Tag)
 from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, SubscribeRecipeSerializer,
-                          SubscribeSerializer, TagSerializer, TokenSerializer,
+                          SubscribeSerializer, TagSerializer,
                           UserCreateSerializer, UserListSerializer,
                           UserPasswordSerializer)
+
 
 User = get_user_model()
 FILENAME = 'shoppingcart.pdf'
@@ -125,27 +123,11 @@ class AddDeleteShoppingCart(
         self.request.user.shopping_cart.recipe.remove(instance)
 
 
-class AuthToken(ObtainAuthToken):
-    """Авторизация пользователя."""
-
-    serializer_class = TokenSerializer
-    permission_classes = (AllowAny,)
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
-        token, created = Token.objects.get_or_create(user=user)
-        return Response(
-            {'auth_token': token.key},
-            status=status.HTTP_201_CREATED)
-
-
 class UsersViewSet(UserViewSet):
     """Пользователи."""
 
     serializer_class = UserListSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
 
     def get_queryset(self):
         return User.objects.annotate(
@@ -158,13 +140,9 @@ class UsersViewSet(UserViewSet):
             is_subscribed=Value(False))
 
     def get_serializer_class(self):
-        if self.request.method.lower() == 'post':
+        if self.request.method in SAFE_METHODS:
             return UserCreateSerializer
         return UserListSerializer
-
-    def perform_create(self, serializer):
-        password = make_password(self.request.data['password'])
-        serializer.save(password=password)
 
     @action(
         detail=False,

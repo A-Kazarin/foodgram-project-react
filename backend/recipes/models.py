@@ -1,3 +1,4 @@
+from colorfield.fields import ColorField
 from django.contrib.auth import get_user_model
 from django.core import validators
 from django.db import models
@@ -12,7 +13,7 @@ class Ingredient(models.Model):
         'Название ингредиента',
         max_length=200)
     measurement_unit = models.CharField(
-        'Единица измерения ингредиента',
+        'Единица измерения',
         max_length=200)
 
     class Meta:
@@ -29,8 +30,9 @@ class Tag(models.Model):
         'Имя',
         max_length=60,
         unique=True)
-    color = models.CharField(
-        'Цвет',
+    color = ColorField(
+        verbose_name='HEX-код',
+        format='hex',
         max_length=7,
         unique=True)
     slug = models.SlugField(
@@ -64,14 +66,13 @@ class Recipe(models.Model):
     text = models.TextField(
         'Описание рецепта')
     cooking_time = models.BigIntegerField(
-        'Время приготовления рецепта')
+        'Время приготовления')
     ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredient')
     tags = models.ManyToManyField(
         Tag,
-        verbose_name='Тэги',
-        related_name='recipes')
+        through='RecipeTag')
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время приготовления в минутах',
         validators=[validators.MinValueValidator(
@@ -113,6 +114,15 @@ class RecipeIngredient(models.Model):
             models.UniqueConstraint(
                 fields=['recipe', 'ingredient'],
                 name='unique ingredient')]
+
+
+class RecipeTag(models.Model):
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE)
+    tag = models.ForeignKey(
+        'Tag',
+        on_delete=models.CASCADE)
 
 
 class Subscribe(models.Model):
@@ -160,7 +170,7 @@ class FavoriteRecipe(models.Model):
         verbose_name_plural = 'Избранные рецепты'
 
     def __str__(self):
-        list_ = [item['name'] for item in self.recipe.values('name')]
+        list_ = [_.name for _ in self.recipe.all()]
         return f'Пользователь {self.user} добавил {list_} в избранные.'
 
     @receiver(post_save, sender=User)
@@ -188,7 +198,7 @@ class ShoppingCart(models.Model):
         ordering = ['-id']
 
     def __str__(self):
-        list_ = [item['name'] for item in self.recipe.values('name')]
+        list_ = [_.name for _ in self.recipe.all()]
         return f'Пользователь {self.user} добавил {list_} в покупки.'
 
     @receiver(post_save, sender=User)
