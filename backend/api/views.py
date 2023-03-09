@@ -163,6 +163,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     """Рецепты."""
 
     filterset_class = RecipeFilter
+    filterset_fields = ['is_favorited', 'is_in_shopping_cart']
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def get_serializer_class(self):
@@ -171,15 +172,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return RecipeWriteSerializer
 
     def get_queryset(self):
-        return Recipe.objects.annotate(
-            is_favorited=Exists(
-                FavoriteRecipe.objects.filter(
-                    user=self.request.user, recipe=OuterRef('id'))),
-            is_in_shopping_cart=Exists(
-                ShoppingCart.objects.filter(
-                    user=self.request.user,
-                    recipe=OuterRef('id')))
-        ).select_related('author').prefetch_related(
+        return Recipe.objects.annotate(is_favorited,
+            is_in_shopping_cart).select_related('author').prefetch_related(
             'tags', 'ingredients', 'recipe',
             'shopping_cart', 'favorite_recipe'
         ) if self.request.user.is_authenticated else Recipe.objects.annotate(
