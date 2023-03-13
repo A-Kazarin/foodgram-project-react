@@ -1,4 +1,4 @@
-asgiref==3.4.1
+asgiref==3.6.0
 Django==4.1.7
 django-filter==21.1
 djangorestframework==3.14.0
@@ -12,3 +12,5 @@ pytz==2021.3
 reportlab==3.6.12
 sqlparse==0.4.3
 django-colorfield==0.8.0
+python-dotenv==0.20.0
+djoser==2.1.0
