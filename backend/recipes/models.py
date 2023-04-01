@@ -30,9 +30,8 @@ class Tag(models.Model):
         'Имя',
         max_length=60,
         unique=True)
-    color = ColorField(
-        verbose_name='HEX-код',
-        format='hex',
+    color = models.CharField(
+        'Цвет',
         max_length=7,
         unique=True)
     slug = models.SlugField(
