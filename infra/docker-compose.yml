@@ -17,7 +17,6 @@ services:
       python manage.py collectstatic --noinput &&
       gunicorn --bind 0:8000 foodgram.wsgi"
     volumes:
-      - data_value:/code/data/
       - static_value:/code/static/
       - media_value:/code/media/
     depends_on:
@@ -29,16 +28,13 @@ services:
     image: alexanderkazarin/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
-    depends_on:
-      - backend
 
   nginx:
     image: nginx:1.19.3
-    restart: always
     ports:
       - "80:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/nginx.conf
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ../frontend/build:/usr/share/nginx/html/
       - ../docs/redoc.html:/usr/share/nginx/html/api/docs/redoc.html
       - ../docs/openapi-schema.yml:/usr/share/nginx/html/api/docs/openapi-schema.yml
