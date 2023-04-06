@@ -13,11 +13,9 @@ services:
     image: alexanderkazarin/foodgram_backend:latest
     restart: always
     command: >
-      sh -c "python manage.py collectstatic --no-input &&
-             python manage.py migrate &&
-             python manage.py load_ingrs &&
-             python manage.py load_tags &&
-             gunicorn foodgram.wsgi --bind 0.0.0.0:8000"
+      bash -c "python manage.py migrate &&
+      python manage.py collectstatic --noinput &&
+      gunicorn --bind 0:8000 foodgram.wsgi"
     volumes:
       - data_value:/code/data/
       - static_value:/code/static/
