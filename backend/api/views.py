@@ -6,12 +6,11 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (SAFE_METHODS, AllowAny,
-                                        IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+                                        IsAuthenticated)
 from rest_framework.response import Response
 
 from api.filters import IngredientFilter, RecipeFilter
-from api.permissions import IsAdminOrReadOnly
+from api.permissions import IsAdminOrReadOnly, IsAuthenticatedOrReadOnly
 from recipes.models import (FavoriteRecipe, Ingredient, Recipe, ShoppingCart,
                             Subscribe, Tag)
 
@@ -27,7 +26,7 @@ class GetObjectMixin:
     """Миксин для удаления/добавления рецептов избранных/корзины."""
 
     serializer_class = SubscribeRecipeSerializer
-    permission_classes = (AllowAny,)
+    permission_classes = [AllowAny]
 
     def get_object(self):
         recipe_id = self.kwargs['recipe_id']
@@ -39,7 +38,7 @@ class GetObjectMixin:
 class PermissionAndPaginationMixin:
     """Миксин для списка тегов и ингридиентов."""
 
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = [IsAdminOrReadOnly]
     pagination_class = None
 
 
@@ -49,6 +48,7 @@ class AddAndDeleteSubscribe(
     """Подписка и отписка от пользователя."""
 
     serializer_class = SubscribeSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         return self.request.user.follower.select_related(
@@ -203,32 +203,32 @@ class SubscriptionsView(generics.ListAPIView):
         user = self.request.user
         return Subscribe.objects.filter(user=user)
 
-
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return User.objects.annotate(
-            is_subscribed=Exists(
-                self.request.user.follower.filter(
-                    author=OuterRef('id'))
-            )).prefetch_related(
-                'follower', 'following'
-        ) if self.request.user.is_authenticated else User.objects.annotate(
-            is_subscribed=Value(False))
-
-    @action(
-        detail=False,
-        permission_classes=(IsAuthenticated,))
-    def subscriptions(self, request):
-        """Получить на кого пользователь подписан."""
-
-        user = request.user
-        queryset = Subscribe.objects.filter(user=user)
-        pages = self.paginate_queryset(queryset)
-        serializer = SubscribeSerializer(
-            pages, many=True,
-            context={'request': request})
-        return self.get_paginated_response(serializer.data)
+#
+# class UserViewSet(viewsets.ModelViewSet):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#     permission_classes = [IsAuthenticated]
+#
+#     def get_queryset(self):
+#         return User.objects.annotate(
+#             is_subscribed=Exists(
+#                 self.request.user.follower.filter(
+#                     author=OuterRef('id'))
+#             )).prefetch_related(
+#                 'follower', 'following'
+#         ) if self.request.user.is_authenticated else User.objects.annotate(
+#             is_subscribed=Value(False))
+#
+#     @action(
+#         detail=False,
+#         permission_classes=(IsAuthenticated,))
+#     def subscriptions(self, request):
+#         """Получить на кого пользователь подписан."""
+#
+#         user = request.user
+#         queryset = Subscribe.objects.filter(user=user)
+#         pages = self.paginate_queryset(queryset)
+#         serializer = SubscribeSerializer(
+#             pages, many=True,
+#             context={'request': request})
+#         return self.get_paginated_response(serializer.data)
