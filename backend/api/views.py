@@ -9,7 +9,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from rest_framework import generics, status, viewsets
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action
 from rest_framework.permissions import (SAFE_METHODS, AllowAny,
                                         IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
@@ -220,7 +220,7 @@ class IngredientsViewSet(
 
 
 class SubscriptionsView(generics.ListAPIView):
-    serializer_class =  SubscribeSerializer
+    serializer_class = SubscribeSerializer
 
     def get_queryset(self):
         user = self.request.user
