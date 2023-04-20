@@ -196,7 +196,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
             'Cписок покупок пуст!')
         page.save()
         buffer.seek(0)
-        return FileResponse(buffer, charset='utf-8', as_attachment=True, filename=FILENAME)
+        return FileResponse(buffer, charset='utf-8',
+                            as_attachment=True, filename=FILENAME)
 
 
 class TagsViewSet(
