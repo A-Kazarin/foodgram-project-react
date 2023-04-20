@@ -188,7 +188,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             page.save()
             buffer.seek(0)
             return FileResponse(
-                buffer, as_attachment=True, filename=FILENAME)
+                buffer, charset='utf-8', as_attachment=True, filename=FILENAME)
         page.setFont('Vera', 24)
         page.drawString(
             x_position,
@@ -196,7 +196,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             'Cписок покупок пуст!')
         page.save()
         buffer.seek(0)
-        return FileResponse(buffer, as_attachment=True, filename=FILENAME)
+        return FileResponse(buffer, charset='utf-8', as_attachment=True, filename=FILENAME)
 
 
 class TagsViewSet(
