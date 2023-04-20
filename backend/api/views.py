@@ -16,7 +16,7 @@ from recipes.models import (FavoriteRecipe, Ingredient, Recipe, ShoppingCart,
 
 from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, SubscribeRecipeSerializer,
-                          SubscribeSerializer, TagSerializer, UserSerializer)
+                          SubscribeSerializer, TagSerializer)
 
 User = get_user_model()
 FILENAME = 'shopping_cart.txt'
