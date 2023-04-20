@@ -63,6 +63,7 @@ jobs:
             cd infra/
             sudo docker-compose stop
             sudo docker-compose rm backend
+            sudo docker image rm alexanderkazarin/foodgram_backend
             rm -f .env
             touch .env
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
