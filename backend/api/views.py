@@ -1,5 +1,3 @@
-import io
-
 from django.contrib.auth import get_user_model
 from django.db.models.aggregates import Count, Sum
 from django.db.models.expressions import Exists, OuterRef, Value
