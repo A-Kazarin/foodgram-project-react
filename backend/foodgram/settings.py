@@ -127,6 +127,10 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 6,
 }
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 DJOSER = {
     "HIDE_USERS": False,
     'SERIALIZERS': {
