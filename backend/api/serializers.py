@@ -12,7 +12,8 @@ User = get_user_model()
 ERROR_MSG = 'Не удалось войти в систему с предоставленными учетными данными!'
 
 
-class GetIsSubscribedMixin:
+class UserSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
 
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
@@ -20,58 +21,34 @@ class GetIsSubscribedMixin:
             return False
         return user.follower.filter(author=obj).exists()
 
-
-class UserListSerializer(
-        serializers.ModelSerializer,
-        GetIsSubscribedMixin):
-    is_subscribed = serializers.BooleanField(read_only=True)
-
     class Meta:
-        model = User
         fields = (
-            'email', 'id', 'username',
-            'first_name', 'last_name', 'is_subscribed')
-
-
-class UserCreateSerializer(serializers.ModelSerializer):
-
-    class Meta:
+            "email",
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "password",
+            "is_subscribed",
+        )
+        extra_kwargs = {"password": {"write_only": True}}
         model = User
-        fields = (
-            'id', 'email', 'username',
-            'first_name', 'last_name', 'password',)
-
-    def validate_password(self, password):
-        validators.validate_password(password)
-        return password
-
-
-class UserPasswordSerializer(serializers.Serializer):
-    new_password = serializers.CharField(
-        label='Новый пароль')
-    current_password = serializers.CharField(
-        label='Текущий пароль')
-
-    def validate_current_password(self, current_password):
-        user = self.context['request'].user
-        if not authenticate(
-                username=user.email,
-                password=current_password):
-            raise serializers.ValidationError(
-                ERROR_MSG, code='authorization')
-        return current_password
-
-    def validate_new_password(self, new_password):
-        validators.validate_password(new_password)
-        return new_password
 
     def create(self, validated_data):
-        user = self.context['request'].user
-        password = make_password(
-            validated_data.get('new_password'))
-        user.password = password
+        password = validated_data.pop("password")
+        user = User(**validated_data)
+        user.set_password(password)
         user.save()
-        return validated_data
+        return user
+
+
+class GetIsSubscribedMixin:
+
+    def get_is_subscribed(self, obj):
+        user = self.context['request'].user
+        if not user.is_authenticated:
+            return False
+        return user.follower.filter(author=obj).exists()
 
 
 class TagSerializer(serializers.ModelSerializer):

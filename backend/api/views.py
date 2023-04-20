@@ -5,7 +5,6 @@ from django.db.models.aggregates import Count, Sum
 from django.db.models.expressions import Exists, OuterRef, Value
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
-from djoser.views import UserViewSet
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
@@ -23,8 +22,7 @@ from recipes.models import (FavoriteRecipe, Ingredient, Recipe, ShoppingCart,
 from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, SubscribeRecipeSerializer,
                           SubscribeSerializer, TagSerializer,
-                          UserCreateSerializer, UserListSerializer,
-                          UserPasswordSerializer)
+                          )
 
 
 User = get_user_model()
@@ -121,42 +119,6 @@ class AddDeleteShoppingCart(
 
     def perform_destroy(self, instance):
         self.request.user.shopping_cart.recipe.remove(instance)
-
-
-class UsersViewSet(UserViewSet):
-    """Пользователи."""
-
-    serializer_class = UserListSerializer
-    permission_classes = (AllowAny,)
-
-    def get_queryset(self):
-        return User.objects.annotate(
-            is_subscribed=Exists(
-                self.request.user.follower.filter(
-                    author=OuterRef('id'))
-            )).prefetch_related(
-                'follower', 'following'
-        ) if self.request.user.is_authenticated else User.objects.annotate(
-            is_subscribed=Value(False))
-
-    def get_serializer_class(self):
-        if self.request.method in SAFE_METHODS:
-            return UserCreateSerializer
-        return UserListSerializer
-
-    @action(
-        detail=False,
-        permission_classes=(IsAuthenticated,))
-    def subscriptions(self, request):
-        """Получить на кого пользователь подписан."""
-
-        user = request.user
-        queryset = Subscribe.objects.filter(user=user)
-        pages = self.paginate_queryset(queryset)
-        serializer = SubscribeSerializer(
-            pages, many=True,
-            context={'request': request})
-        return self.get_paginated_response(serializer.data)
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
@@ -257,18 +219,9 @@ class IngredientsViewSet(
     filterset_class = IngredientFilter
 
 
-@api_view(['post'])
-def set_password(request):
-    """Изменить пароль."""
+class SubscriptionsView(generics.ListAPIView):
+    serializer_class =  SubscribeSerializer
 
-    serializer = UserPasswordSerializer(
-        data=request.data,
-        context={'request': request})
-    if serializer.is_valid():
-        serializer.save()
-        return Response(
-            {'message': 'Пароль изменен!'},
-            status=status.HTTP_201_CREATED)
-    return Response(
-        {'error': 'Введите верные данные!'},
-        status=status.HTTP_400_BAD_REQUEST)
+    def get_queryset(self):
+        user = self.request.user
+        return Subscribe.objects.filter(user=user)
