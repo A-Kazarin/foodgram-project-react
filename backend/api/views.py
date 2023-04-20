@@ -3,11 +3,8 @@ import io
 from django.contrib.auth import get_user_model
 from django.db.models.aggregates import Count, Sum
 from django.db.models.expressions import Exists, OuterRef, Value
-from django.http import FileResponse
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfgen import canvas
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (SAFE_METHODS, AllowAny,
@@ -161,43 +158,55 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         """Качаем список с ингредиентами."""
 
-        buffer = io.BytesIO()
-        page = canvas.Canvas(buffer)
-        pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))
-        x_position, y_position = 50, 800
+        # buffer = io.BytesIO()
+        # page = canvas.Canvas(buffer)
+        # pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))
+        # x_position, y_position = 50, 800
         shopping_cart = (
             request.user.shopping_cart.recipe.
             values(
                 'ingredients__name',
                 'ingredients__measurement_unit'
             ).annotate(amount=Sum('recipe__amount')).order_by())
-        page.setFont('Vera', 14)
+        # page.setFont('Vera', 14)
+        data = ''
         if shopping_cart:
-            indent = 20
-            page.drawString(x_position, y_position, 'Cписок покупок:')
-            for index, recipe in enumerate(shopping_cart, start=1):
-                page.drawString(
-                    x_position, y_position - indent,
-                    f'{index}. {recipe["ingredients__name"]} - '
-                    f'{recipe["amount"]} '
-                    f'{recipe["ingredients__measurement_unit"]}.')
-                y_position -= 15
-                if y_position <= 50:
-                    page.showPage()
-                    y_position = 800
-            page.save()
-            buffer.seek(0)
-            return FileResponse(
-                buffer, charset='utf-8', as_attachment=True, filename=FILENAME)
-        page.setFont('Vera', 24)
-        page.drawString(
-            x_position,
-            y_position,
-            'Cписок покупок пуст!')
-        page.save()
-        buffer.seek(0)
-        return FileResponse(buffer, charset='utf-8',
-                            as_attachment=True, filename=FILENAME)
+            # indent = 20
+            # page.drawString(x_position, y_position, 'Cписок покупок:')
+            # for index, recipe in enumerate(shopping_cart, start=1):
+            #     page.drawString(
+            #         x_position, y_position - indent,
+            #         f'{index}. {recipe["ingredients__name"]} - '
+            #         f'{recipe["amount"]} '
+            #         f'{recipe["ingredients__measurement_unit"]}.')
+            #     y_position -= 15
+            #     if y_position <= 50:
+            #         page.showPage()
+            #         y_position = 800
+            # page.save()
+            # buffer.seek(0)
+            # return FileResponse(
+            #     buffer, charset='utf-8', as_attachment=True, filename=FILENAME)
+            for index, recipe in enumerate (shopping_cart):
+                data += (f'{index}. {recipe["ingredients__name"]} - '
+                         f'{recipe["amount"]} '
+                         f'{recipe["ingredients__measurement_unit"]}.')
+        else:
+            data = 'Список покупок пуст'
+        return HttpResponse(
+            data,
+            content_type="text/plain, charset=utf8",
+            headers={"Content-Disposition": "attachment; filename=shopping_cart.txt"},
+        )
+        # page.setFont('Vera', 24)
+        # page.drawString(
+        #     x_position,
+        #     y_position,
+        #     'Cписок покупок пуст!')
+        # page.save()
+        # buffer.seek(0)
+        # return FileResponse(buffer, charset='utf-8',
+        #                     as_attachment=True, filename=FILENAME)
 
 
 class TagsViewSet(
