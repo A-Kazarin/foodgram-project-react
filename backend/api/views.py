@@ -17,7 +17,7 @@ from recipes.models import (FavoriteRecipe, Ingredient, Recipe, ShoppingCart,
 
 from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, SubscribeRecipeSerializer,
-                          SubscribeSerializer, TagSerializer)
+                          SubscribeSerializer, TagSerializer, UserSerializer)
 
 User = get_user_model()
 FILENAME = 'shoppingcart.pdf'
@@ -155,41 +155,18 @@ class RecipesViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,))
     def download_shopping_cart(self, request):
         """Качаем список с ингредиентами."""
-
-        # buffer = io.BytesIO()
-        # page = canvas.Canvas(buffer)
-        # pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))
-        # x_position, y_position = 50, 800
         shopping_cart = (
             request.user.shopping_cart.recipe.
             values(
                 'ingredients__name',
                 'ingredients__measurement_unit'
             ).annotate(amount=Sum('recipe__amount')).order_by())
-        # page.setFont('Vera', 14)
         data = ''
         if shopping_cart:
-            # indent = 20
-            # page.drawString(x_position, y_position, 'Cписок покупок:')
-            # for index, recipe in enumerate(shopping_cart, start=1):
-            #     page.drawString(
-            #         x_position, y_position - indent,
-            #         f'{index}. {recipe["ingredients__name"]} - '
-            #         f'{recipe["amount"]} '
-            #         f'{recipe["ingredients__measurement_unit"]}.')
-            #     y_position -= 15
-            #     if y_position <= 50:
-            #         page.showPage()
-            #         y_position = 800
-            # page.save()
-            # buffer.seek(0)
-            # return FileResponse(
-            #     buffer, charset='utf-8', as_attachment=True,
-            #     filename=FILENAME)
             for index, recipe in enumerate(shopping_cart):
                 data += (f'{index}. {recipe["ingredients__name"]} - '
                          f'{recipe["amount"]} '
-                         f'{recipe["ingredients__measurement_unit"]}.')
+                         f'{recipe["ingredients__measurement_unit"]}.\n')
         else:
             data = 'Список покупок пуст'
         return HttpResponse(
@@ -198,15 +175,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
             headers={"Content-Disposition": "attachment; "
                                             "filename=shopping_cart.txt"},
         )
-        # page.setFont('Vera', 24)
-        # page.drawString(
-        #     x_position,
-        #     y_position,
-        #     'Cписок покупок пуст!')
-        # page.save()
-        # buffer.seek(0)
-        # return FileResponse(buffer, charset='utf-8',
-        #                     as_attachment=True, filename=FILENAME)
 
 
 class TagsViewSet(
@@ -234,3 +202,9 @@ class SubscriptionsView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         return Subscribe.objects.filter(user=user)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
