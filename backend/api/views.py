@@ -162,7 +162,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         """Качаем список с ингредиентами."""
 
         buffer = io.BytesIO()
-        page = canvas.Canvas(buffer)
+        page = canvas.Canvas(buffer, encoding='utf-8')
         pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))
         x_position, y_position = 50, 800
         shopping_cart = (
