@@ -186,8 +186,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
             # page.save()
             # buffer.seek(0)
             # return FileResponse(
-            #     buffer, charset='utf-8', as_attachment=True, filename=FILENAME)
-            for index, recipe in enumerate (shopping_cart):
+            #     buffer, charset='utf-8', as_attachment=True,
+            #     filename=FILENAME)
+            for index, recipe in enumerate(shopping_cart):
                 data += (f'{index}. {recipe["ingredients__name"]} - '
                          f'{recipe["amount"]} '
                          f'{recipe["ingredients__measurement_unit"]}.')
@@ -196,7 +197,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return HttpResponse(
             data,
             content_type="text/plain, charset=utf8",
-            headers={"Content-Disposition": "attachment; filename=shopping_cart.txt"},
+            headers={"Content-Disposition": "attachment; "
+                                            "filename=shopping_cart.txt"},
         )
         # page.setFont('Vera', 24)
         # page.drawString(
